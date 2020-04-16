@@ -18,13 +18,14 @@ cursor = pygame.transform.scale(cursor, (45, 45))
 oven = pygame.transform.scale(oven, (40, 40))
 factory = pygame.transform.scale(factory, (40, 40))
 
-costs = [25, 123, 828, 650]
+shop = {cursor: (420, 30), oven: (430, 90), factory: (410, 140)}
+improvements = {cursor: (16, 310), oven: (12, 368), factory: (12, 432)}
+
+costs = [25, 123, 828]
 
 samsa = 0
 
-cursors = 0
-ovens = 0
-factories = 0
+number = [0, 0, 0]  # number of cursors,ovens,factories
 
 tmp = 0
 
@@ -39,70 +40,72 @@ pygame.display.set_caption('Samsa-Clicker v0.1')
 clock = pygame.time.Clock()
 
 
+def buy(index):
+    global samsa
+    if samsa >= costs[index]:
+        if number[index] < 1242:
+            samsa -= costs[index]
+            number[index] += 1
+            costs[index] += 8 + index * 4
+
+
+def Clicked_to(pos):
+    index = 0
+    for i in shop:
+        if i.get_rect().move(shop[i]).collidepoint(pos):
+            return index
+        index += 1
+    return -1
+
+
 def process_mouse(event):
-    global samsa, cursors, ovens, factories
+    global samsa
+
     if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_SPACE:
             samsa += 1
     elif event.type == pygame.MOUSEBUTTONDOWN:
         pos = pygame.mouse.get_pos()
-        if cursor.get_rect().move((520, 38)).collidepoint(pos):
-            if samsa >= costs[0]:
-                if cursors < 1242:
-                    samsa -= costs[0]
-                    cursors += 1
-                    costs[0] += 8
-        elif oven.get_rect().move((530, 78)).collidepoint(pos):
-            if samsa >= costs[1]:
-                if ovens < 1242:
-                    samsa -= costs[1]
-                    ovens += 1
-                    costs[1] += 13
-        elif factory.get_rect().move((510, 142)).collidepoint(pos):
-            if samsa >= costs[2]:
-                if cursors < 1242:
-                    samsa -= costs[3]
-                    factories += 1
-                    costs[2] += 13
+        index = Clicked_to(pos)
+        if (index != -1):
+            buy(index)
 
 
 def draw_text(fontsize, text, coord):
-    font = pygame.font.Font(r"C:\Windows\Fonts\Candara.ttf", fontsize)
+    font = pygame.font.SysFont('arial', fontsize)
     text_image = font.render(text, True, (255, 255, 255))
     game_display.blit(text_image, coord)
 
 
 def draw_texts():
-    global samsa, cursors, ovens, factories
+    global samsa
 
     draw_text(30, "SAMSA:" + str(samsa), (70, 0))
     draw_text(25, "!CLICK IT!", (80, 33))
 
-    draw_text(30, "SHOP:", (650, 0))
-    draw_text(28, "CURSOR : " + str(costs[0]) + "S", (580, 38))
-    draw_text(28, "OVEN : " + str(costs[1]) + "S", (600, 100))
-    draw_text(28, "FACTORY : " + str(costs[2]) + "S", (580, 144))
+    draw_text(30, "SHOP:", (500, 0))
+    draw_text(28, "CURSOR : " + str(costs[0]) + "S", (480, 38))
+    draw_text(28, "OVEN : " + str(costs[1]) + "S", (500, 100))
+    draw_text(28, "FACTORY : " + str(costs[2]) + "S", (460, 144))
 
-    draw_text(28, "   " + str(cursors) + "PCS", (50, 326))
-    draw_text(28, str(ovens) + "PCS", (58, 380))
-    draw_text(28, str(factories) + "PCS", (58, 435))
+    draw_text(28, "   " + str(number[0]) + "PCS", (50, 326))
+    draw_text(28, str(number[1]) + "PCS", (58, 380))
+    draw_text(28, str(number[2]) + "PCS", (58, 435))
 
 
 def draw_shop():
-    game_display.blit(cursor, (520, 30))
-    game_display.blit(oven, (530, 90))
-    game_display.blit(factory, (510, 140))
+    for i in shop:
+        game_display.blit(i, shop[i])
 
 
 def draw_improvements():
-    game_display.blit(cursor, (16, 310))
-    game_display.blit(oven, (12, 368))
-    game_display.blit(factory, (12, 432))
+    for i in improvements:
+        game_display.blit(i, improvements[i])
 
 
 def game_loop(update_time):
     global game_exit, tmp, last_cursor, last_oven, \
-        last_factory, last_factory2, samsa, cursors, factories
+        last_factory, last_factory2, samsa
     while not game_exit:
         for event in pygame.event.get():
             process_mouse(event)
@@ -111,14 +114,8 @@ def game_loop(update_time):
 
         game_display.blit(background, (0, 0))
 
-        if samsa % 4 == 0:
-            game_display.blit(samsa_image, (8, 62))
-        elif  samsa % 4 == 1:
-            game_display.blit(samsa_image, (18, 62))
-        elif samsa % 4 == 2 :
-            game_display.blit(samsa_image, (18, 72))
-        else :
-            game_display.blit(samsa_image, (8, 72))
+        r = samsa % 4
+        game_display.blit(samsa_image, (20 + 3 * r * (2 - r), 62 - 3 * r * (2 - r)))
 
         draw_shop()
         draw_improvements()
@@ -133,15 +130,15 @@ def game_loop(update_time):
             last_factory = 0
             last_factory2 = 0
         if tmp >= last_cursor + 50:
-            samsa += cursors
+            samsa += number[0]
             last_cursor = tmp
 
         if tmp >= last_oven + 30:
-            samsa += ovens
+            samsa += number[1]
             last_oven = tmp
 
         if tmp >= last_factory + 18:
-            samsa += factories
+            samsa += number[2]
             last_factory = tmp
 
         if tmp >= last_factory2 + 30:
